@@ -353,7 +353,7 @@ class GeoRideContext:
                     "device_id": tracker_device.unique_id,
                     "device_name": tracker_device.name,
                 }
-                self._hass.bus.async_fire(f"{DOMAIN}_lock_event", event_data)
+                self._hass.bus.fire(f"{DOMAIN}_lock_event", event_data)
 
                 asyncio.run_coroutine_threadsafe(
                     coordinator.async_request_refresh(), self._hass.loop
@@ -374,7 +374,7 @@ class GeoRideContext:
                     "device_id": tracker_device.unique_id,
                     "device_name": tracker_device.name,
                 }
-                self._hass.bus.async_fire(f"{DOMAIN}_device_event", event_data)
+                self._hass.bus.fire(f"{DOMAIN}_device_event", event_data)
                 asyncio.run_coroutine_threadsafe(
                     coordinator.async_request_refresh(), self._hass.loop
                 ).result()
@@ -384,7 +384,11 @@ class GeoRideContext:
         """on device callback"""
         _LOGGER.info("On refresh tracker received")
         self._previous_refresh = math.floor(time.time()/60)
-        self.force_refresh_trackers()
+        # Runs in the socket's thread: hand the coroutine to Home Assistant's
+        # loop (called bare, it was created and never run).
+        asyncio.run_coroutine_threadsafe(
+            self.force_refresh_trackers(), self._hass.loop
+        ).result()
     
         for coordoned_tracker in self._georide_trackers_coordoned:
             tracker_device = coordoned_tracker['tracker_device']
@@ -394,7 +398,7 @@ class GeoRideContext:
                 "device_id": tracker_device.unique_id,
                 "device_name": tracker_device.name,
             }
-            self._hass.bus.async_fire(f"{DOMAIN}_refresh_tracker_event", event_data)
+            self._hass.bus.fire(f"{DOMAIN}_refresh_tracker_event", event_data)
             asyncio.run_coroutine_threadsafe(
                 coordinator.async_request_refresh(), self._hass.loop
             ).result()
@@ -444,7 +448,7 @@ class GeoRideContext:
                     "device_name": tracker_device.name,
                     "type": f"alarm_{data['name']}"
                 }
-                self._hass.bus.async_fire(f"{DOMAIN}_alarm_event", event_data)
+                self._hass.bus.fire(f"{DOMAIN}_alarm_event", event_data)
                 asyncio.run_coroutine_threadsafe(
                     coordinator.async_request_refresh(), self._hass.loop
                 ).result()
@@ -469,7 +473,7 @@ class GeoRideContext:
                     "device_id": tracker_device.unique_id,
                     "device_name": tracker_device.name,
                 }
-                self._hass.bus.async_fire(f"{DOMAIN}_position_event", event_data)
+                self._hass.bus.fire(f"{DOMAIN}_position_event", event_data)
                 asyncio.run_coroutine_threadsafe(
                     coordinator.async_request_refresh(), self._hass.loop
                 ).result()
