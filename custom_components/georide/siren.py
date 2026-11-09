@@ -17,7 +17,10 @@ import georideapilib.api as GeoRideApi
 from .const import DOMAIN as GEORIDE_DOMAIN
 from .device import Device
 
-ENTITY_ID_FORMAT = GEORIDE_DOMAIN + ".{}"
+# A siren's entity ID: the siren domain, not GeoRide's (Home Assistant
+# refuses another domain from 2027.5). The siren platform has no
+# ENTITY_ID_FORMAT to import, unlike sensor or switch.
+ENTITY_ID_FORMAT = "siren.{}"
 
 _LOGGER = logging.getLogger(__name__) 
 
@@ -48,7 +51,7 @@ class GeoRideSirenEntity(CoordinatorEntity, SirenEntity):
         super().__init__(coordinator)
         self._tracker_device = tracker_device
         self._name = tracker_device.tracker.tracker_name
-        self.entity_id = f"{ENTITY_ID_FORMAT.format('eco_mode')}.{tracker_device.tracker.tracker_id}"# pylint: disable=C0301
+        self.entity_id = f"{ENTITY_ID_FORMAT.format('eco_mode')}_{tracker_device.tracker.tracker_id}"# pylint: disable=C0301
         self._hass = hass
 
     @property
